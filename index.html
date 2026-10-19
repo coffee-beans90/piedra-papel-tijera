@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Guía Tutorial por Bloques: Piedra, Papel o Tijeras en MakeCode</title>
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- Google Fonts -->
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap">
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            display: ['Space Grotesk', 'sans-serif'],
+          },
+          colors: {
+            ceibal: {
+              primary: '#0055A5',
+              accent: '#00A3E0',
+              dark: '#0A2540',
+              light: '#F0F7FF'
+            },
+            // Colores Oficiales de Categorías MakeCode micro:bit
+            mc: {
+              basic: '#0078D4',      // Básico / Mostrar (Azul MakeCode)
+              input: '#D83B01',      // Entrada (Naranja/Rojo cálido)
+              music: '#E3008C',      // Música (Rosa)
+              led: '#5C2D91',        // LED (Violeta)
+              radio: '#E30016',      // Radio (Rojo)
+              loops: '#008272',      // Bucles (Teal oscuro)
+              logic: '#008272',      // Lógica (Teal/Verde azulado)
+              variables: '#DC2626',  // Variables (Rojo/Naranja)
+              math: '#002050',       // Matemática (Azul Oscuro/Plum)
+            }
+          }
+        }
+      }
+    }
+  </script>
+
+  <style>
+    /* Estilos para renderizar Bloques tipo Puzzle de MakeCode */
+    .mc-block-c {
+      border-radius: 8px 8px 8px 8px;
+      padding: 10px 12px;
+      color: white;
+      font-weight: 600;
+      font-size: 13px;
+      box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+      position: relative;
+      border-left: 6px solid rgba(0,0,0,0.25);
+    }
+
+    /* Muesca lateral/conector puzzle */
+    .mc-block-c::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 18px;
+      width: 14px;
+      height: 5px;
+      background-color: rgba(0,0,0,0.2);
+      border-radius: 0 0 4px 4px;
+    }
+
+    .mc-slot {
+      background-color: rgba(0, 0, 0, 0.22);
+      border-radius: 6px;
+      padding: 4px 8px;
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      margin: 2px 0;
+      border: 1px dashed rgba(255, 255, 255, 0.4);
+      min-height: 28px;
+    }
+
+    .mc-inline-block {
+      border-radius: 6px;
+      padding: 2px 8px;
+      color: white;
+      font-weight: 700;
+      font-size: 12px;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      box-shadow: inset 0 1px 2px rgba(0,0,0,0.3);
+    }
+
+    /* Matriz de LEDs simulador */
+    .led-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 6px;
+      background-color: #111827;
+      padding: 14px;
+      border-radius: 14px;
+      box-shadow: inset 0 3px 6px rgba(0,0,0,0.8);
+    }
+    .led-dot {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      background-color: #374151;
+      transition: background-color 0.15s ease, box-shadow 0.15s ease;
+    }
+    .led-dot.on {
+      background-color: #f87171;
+      box-shadow: 0 0 10px #ef4444, 0 0 16px #dc2626;
+    }
+
+    @keyframes shake {
+      0% { transform: translate(1px, 1px) rotate(0deg); }
+      20% { transform: translate(-3px, 0px) rotate(2deg); }
+      40% { transform: translate(3px, -2px) rotate(-2deg); }
+      60% { transform: translate(-3px, 1px) rotate(0deg); }
+      80% { transform: translate(2px, -1px) rotate(1deg); }
+      100% { transform: translate(0px, 0px) rotate(0deg); }
+    }
+    .animate-shake {
+      animation: shake 0.45s ease-in-out;
+    }
+
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #f1f5f9; }
+    ::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 font-sans antialiased min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-ceibal-dark text-white border-b-4 border-ceibal-accent sticky top-0 z-50 shadow-md">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5 flex flex-wrap justify-between items-center gap-4">
+      <div class="flex items-center space-x-3">
+        <div class="bg-ceibal-accent p-2 rounded-lg text-white">
+          <i class="fa-solid fa-shapes text-2xl"></i>
+        </div>
+        <div>
+          <span class="text-xs font-semibold tracking-wider uppercase text-ceibal-accent block">Pensamiento Computacional • 7mo EBI Uruguay</span>
+          <h1 class="text-xl sm:text-2xl font-bold font-display leading-tight">Programación por Bloques: Piedra, Papel o Tijera</h1>
+        </div>
+      </div>
+      <div class="flex items-center gap-3">
+        <span class="bg-blue-900/60 text-blue-200 border border-blue-700 text-xs px-3 py-1.5 rounded-full font-medium flex items-center gap-1.5">
+          <i class="fa-solid fa-puzzle-piece text-amber-400"></i> 100% Bloques Visuales
+        </span>
+        <a href="https://makecode.microbit.org" target="_blank" rel="noopener noreferrer" class="bg-ceibal-accent hover:bg-sky-400 text-white font-medium text-xs sm:text-sm px-4 py-2 rounded-lg transition-all flex items-center gap-2 shadow">
+          <span>Abrir MakeCode</span>
+          <i class="fa-solid fa-external-link text-xs"></i>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Banner Informativo -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full">
+    <div class="bg-gradient-to-r from-ceibal-primary via-blue-700 to-indigo-800 rounded-2xl p-6 sm:p-8 text-white shadow-lg">
+      <div class="grid md:grid-cols-3 gap-6 items-center">
+        <div class="md:col-span-2">
+          <div class="inline-block bg-white/20 backdrop-blur-md px-3 py-1 rounded-full text-xs font-medium mb-3 text-blue-100">
+            <i class="fa-solid fa-gamepad mr-1"></i> Desafío Encajar Bloques #1
+          </div>
+          <h2 class="text-2xl sm:text-3xl font-bold font-display mb-3">Aprende a Programar Encajando Piezas</h2>
+          <p class="text-blue-100 text-sm sm:text-base leading-relaxed mb-4">
+            Aprenderás a construir tu juego en MakeCode seleccionando los bloques por su <b>color</b> y <b>forma de rompecabezas</b>. Agitaremos la placa micro:bit para elegir al azar una mano.
+          </p>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <span class="bg-mc-input px-3 py-1 rounded-md text-white font-semibold flex items-center gap-1 shadow-sm"><i class="fa-solid fa-bolt text-xs"></i> ENTRADA (Naranja)</span>
+            <span class="bg-mc-variables px-3 py-1 rounded-md text-white font-semibold flex items-center gap-1 shadow-sm"><i class="fa-solid fa-box text-xs"></i> VARIABLES (Rojo)</span>
+            <span class="bg-mc-math px-3 py-1 rounded-md text-white font-semibold flex items-center gap-1 shadow-sm"><i class="fa-solid fa-calculator text-xs"></i> MATEMÁTICA (Azul Oscuro)</span>
+            <span class="bg-mc-logic px-3 py-1 rounded-md text-white font-semibold flex items-center gap-1 shadow-sm"><i class="fa-solid fa-code-branch text-xs"></i> LÓGICA (Teal)</span>
+            <span class="bg-mc-basic px-3 py-1 rounded-md text-white font-semibold flex items-center gap-1 shadow-sm"><i class="fa-solid fa-icons text-xs"></i> BÁSICO (Azul)</span>
+          </div>
+        </div>
+
+        <!-- Indicador de progreso global -->
+        <div class="bg-white/10 backdrop-blur-md p-5 rounded-xl border border-white/20 flex flex-col justify-between h-full">
+          <div>
+            <div class="flex justify-between items-center mb-2">
+              <span class="text-xs uppercase font-semibold text-blue-200">Progreso de la Guía</span>
+              <span id="progress-percent" class="text-lg font-bold font-display text-white">0%</span>
+            </div>
+            <div class="w-full bg-blue-950/50 rounded-full h-3 overflow-hidden border border-white/10">
+              <div id="progress-bar" class="bg-ceibal-accent h-full w-0 transition-all duration-500 rounded-full"></div>
+            </div>
+          </div>
+          <p class="text-xs text-blue-200 mt-4 flex items-center gap-2">
+            <i class="fa-solid fa-circle-check text-ceibal-accent"></i>
+            Avanza los pasos y completa la lista de verificación final.
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- NAVEGACIÓN PRINCIPAL ENTRE MODO GUÍA Y PALETA DE BLOQUES -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mt-6 w-full flex gap-3">
+    <button onclick="switchTab('tutorial')" id="tab-tutorial-btn" class="px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-ceibal-primary text-white shadow-md">
+      <i class="fa-solid fa-book-open"></i> Guía Paso a Paso
+    </button>
+    <button onclick="switchTab('palette')" id="tab-palette-btn" class="px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-white text-slate-600 hover:bg-slate-100 border border-slate-200">
+      <i class="fa-solid fa-palette text-amber-500"></i> Paleta de Bloques MakeCode
+    </button>
+  </div>
+
+  <!-- SECCIÓN TAB 1: TUTORIAL PASO A PASO -->
+  <main id="tab-tutorial" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full flex-grow grid lg:grid-cols-12 gap-8">
+
+    <!-- COLUMNA IZQUIERDA: Selector de Pasos y Guía Explicativa (7 Cols) -->
+    <section class="lg:col-span-7 flex flex-col gap-6">
+
+      <!-- BOTONES DE PASOS -->
+      <div class="bg-white rounded-2xl p-4 shadow-sm border border-slate-200">
+        <span class="text-xs font-bold text-slate-400 uppercase tracking-wider block mb-3 px-2">Estructura del Proyecto</span>
+        <div class="grid grid-cols-5 gap-2" id="step-buttons">
+          <button onclick="goToStep(1)" id="btn-step-1" class="step-btn py-2.5 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex flex-col items-center gap-1 bg-ceibal-primary text-white shadow-md">
+            <span>Paso 1</span>
+            <span class="text-[10px] opacity-80 hidden sm:inline">Variable</span>
+          </button>
+          <button onclick="goToStep(2)" id="btn-step-2" class="step-btn py-2.5 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex flex-col items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200">
+            <span>Paso 2</span>
+            <span class="text-[10px] opacity-80 hidden sm:inline">Evento</span>
+          </button>
+          <button onclick="goToStep(3)" id="btn-step-3" class="step-btn py-2.5 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex flex-col items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200">
+            <span>Paso 3</span>
+            <span class="text-[10px] opacity-80 hidden sm:inline">Azar</span>
+          </button>
+          <button onclick="goToStep(4)" id="btn-step-4" class="step-btn py-2.5 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex flex-col items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200">
+            <span>Paso 4</span>
+            <span class="text-[10px] opacity-80 hidden sm:inline">Decisión</span>
+          </button>
+          <button onclick="goToStep(5)" id="btn-step-5" class="step-btn py-2.5 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex flex-col items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200">
+            <span>Paso 5</span>
+            <span class="text-[10px] opacity-80 hidden sm:inline">Desafíos</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- CARDS DE CONTENIDO DE CADA PASO -->
+      <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 flex-grow flex flex-col justify-between">
+        
+        <!-- PASO 1 -->
+        <div id="content-step-1" class="step-content space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-xl font-bold font-display text-slate-800 flex items-center gap-2">
+              <span class="w-8 h-8 rounded-lg bg-red-100 text-red-600 flex items-center justify-center text-sm font-bold">1</span>
+              Paso 1: Crear la Variable "mano"
+            </h3>
+            <span class="text-xs bg-red-50 text-red-600 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">Categoría Variables</span>
+          </div>
+          
+          <p class="text-slate-600 leading-relaxed text-sm sm:text-base">
+            Necesitamos una "caja de memoria" llamada <b>Variable</b> para guardar el número aleatorio (1, 2 o 3) que decidirá si sale Piedra, Papel o Tijera.
+          </p>
+
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+            <h4 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-hand-pointer text-red-500"></i> ¿Cómo hacerlo en MakeCode?
+            </h4>
+            <ol class="text-xs sm:text-sm text-slate-700 space-y-2 list-decimal pl-4">
+              <li>Haz clic en el menú lateral izquierdo de categoría <span class="bg-mc-variables text-white px-2 py-0.5 rounded font-bold">VARIABLES</span> (Rojo/Naranja).</li>
+              <li>Presiona el botón <span class="bg-slate-200 text-slate-800 font-bold px-2 py-0.5 rounded border border-slate-300">Crear una variable...</span>.</li>
+              <li>En la ventana emergente, escribe el nombre: <code class="bg-red-100 text-red-700 px-1.5 py-0.5 rounded font-bold font-mono">mano</code> y pulsa <b>Aceptar</b>.</li>
+            </ol>
+          </div>
+
+          <!-- Representación del bloque generado -->
+          <div class="p-4 bg-slate-900 rounded-xl border border-slate-800 space-y-2">
+            <span class="text-xs text-slate-400 font-mono block">Bloques creados que vas a utilizar:</span>
+            <div class="flex flex-wrap gap-2 items-center">
+              <div class="mc-inline-block bg-mc-variables">
+                <i class="fa-solid fa-box text-xs mr-1"></i> mano
+              </div>
+              <div class="mc-inline-block bg-mc-variables">
+                establecer <span class="bg-red-800 px-1.5 py-0.5 rounded font-mono">mano</span> a [ 0 ]
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 2 -->
+        <div id="content-step-2" class="step-content hidden space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-xl font-bold font-display text-slate-800 flex items-center gap-2">
+              <span class="w-8 h-8 rounded-lg bg-orange-100 text-orange-600 flex items-center justify-center text-sm font-bold">2</span>
+              Paso 2: El Evento de Agitar
+            </h3>
+            <span class="text-xs bg-orange-50 text-orange-600 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">Categoría Entrada</span>
+          </div>
+
+          <p class="text-slate-600 leading-relaxed text-sm sm:text-base">
+            El juego comenzará cuando el jugador sacuda su micro:bit. Usaremos el bloque contenedor de evento de movimiento.
+          </p>
+
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+            <h4 class="font-bold text-sm text-slate-800 flex items-center gap-2">
+              <i class="fa-solid fa-bolt text-orange-500"></i> ¿Cómo hacerlo en MakeCode?
+            </h4>
+            <ol class="text-xs sm:text-sm text-slate-700 space-y-2 list-decimal pl-4">
+              <li>Haz clic en la categoría <span class="bg-mc-input text-white px-2 py-0.5 rounded font-bold">ENTRADA</span> (Naranja).</li>
+              <li>Busca el bloque contenedor grande que dice <span class="bg-mc-input text-white px-2 py-0.5 rounded font-bold">al agitar</span>.</li>
+              <li>Arrástralo y suéltalo en el centro del área de trabajo vacía.</li>
+            </ol>
+          </div>
+
+          <!-- Representación del bloque visual -->
+          <div class="p-4 bg-slate-900 rounded-xl border border-slate-800">
+            <span class="text-xs text-slate-400 font-mono block mb-2">Bloque contenedor de Entrada:</span>
+            <div class="mc-block-c bg-mc-input border-orange-700 max-w-xs">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-bolt text-yellow-300"></i>
+                <span>al agitar</span>
+              </div>
+              <div class="mc-slot min-h-[36px] text-slate-400 text-xs italic">
+                (Arrastra los siguientes bloques dentro)
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 3 -->
+        <div id="content-step-3" class="step-content hidden space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-xl font-bold font-display text-slate-800 flex items-center gap-2">
+              <span class="w-8 h-8 rounded-lg bg-indigo-100 text-indigo-900 flex items-center justify-center text-sm font-bold">3</span>
+              Paso 3: Guardar un Número al Azar
+            </h3>
+            <span class="text-xs bg-indigo-50 text-indigo-900 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">Matemáticas + Variables</span>
+          </div>
+
+          <p class="text-slate-600 leading-relaxed text-sm sm:text-base">
+            Ahora debemos indicarle a la variable <b>mano</b> que tome de forma imprevista el valor 1, 2 o 3 al sacudir la placa.
+          </p>
+
+          <div class="bg-slate-50 p-4 rounded-xl border border-slate-200 space-y-3">
+            <h4 class="font-bold text-sm text-slate-800">Ensamblado de bloques paso a paso:</h4>
+            <ol class="text-xs sm:text-sm text-slate-700 space-y-2 list-decimal pl-4">
+              <li>Coloca el bloque <span class="bg-mc-variables text-white px-1.5 py-0.5 rounded font-bold text-xs">establecer mano a</span> DENTRO del bloque <span class="bg-mc-input text-white px-1.5 py-0.5 rounded font-bold text-xs">al agitar</span>.</li>
+              <li>Abre la categoría <span class="bg-mc-math text-white px-2 py-0.5 rounded font-bold">MATEMÁTICA</span> (Azul Oscuro).</li>
+              <li>Busca la pieza ovalada <span class="bg-mc-math text-white px-2 py-0.5 rounded font-bold text-xs">escoger al azar de 0 a 10</span>.</li>
+              <li>Engánchala justo en el espacio redondo donde está el <code class="bg-slate-200 px-1 rounded">0</code>. Cambia los números para que sea de <b class="text-indigo-600">1 a 3</b>.</li>
+            </ol>
+          </div>
+
+          <!-- Bloque Ensamblado -->
+          <div class="p-4 bg-slate-900 rounded-xl border border-slate-800">
+            <span class="text-xs text-slate-400 font-mono block mb-2">Bloques encajados correctamente:</span>
+            <div class="mc-block-c bg-mc-input border-orange-700 max-w-md">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-bolt text-yellow-300"></i>
+                <span>al agitar</span>
+              </div>
+              <div class="mc-slot">
+                <span>establecer</span>
+                <span class="mc-inline-block bg-red-800">mano</span>
+                <span>a</span>
+                <span class="mc-inline-block bg-mc-math border border-indigo-500">
+                  <i class="fa-solid fa-dice text-[10px]"></i> escoger al azar de <span class="bg-indigo-950 px-1 rounded text-amber-300 font-mono">1</span> a <span class="bg-indigo-950 px-1 rounded text-amber-300 font-mono">3</span>
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 4 -->
+        <div id="content-step-4" class="step-content hidden space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-xl font-bold font-display text-slate-800 flex items-center gap-2">
+              <span class="w-8 h-8 rounded-lg bg-teal-100 text-teal-700 flex items-center justify-center text-sm font-bold">4</span>
+              Paso 4: Mostrar Icono con Condicionales
+            </h3>
+            <span class="text-xs bg-teal-50 text-teal-700 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">Lógica + Básico</span>
+          </div>
+
+          <p class="text-slate-600 leading-relaxed text-sm sm:text-base">
+            Evaluamos el valor guardado en <b>mano</b> para dibujar la figura en los LEDs:
+          </p>
+
+          <div class="grid sm:grid-cols-3 gap-2 text-xs font-medium text-center">
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <b class="text-teal-700 block text-sm">Si mano = 1</b>
+              <span>Piedra (Cuadrado chico)</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <b class="text-teal-700 block text-sm">Si mano = 2</b>
+              <span>Papel (Cuadrado grande)</span>
+            </div>
+            <div class="bg-slate-50 p-2.5 rounded-lg border border-slate-200">
+              <b class="text-teal-700 block text-sm">Si no (mano = 3)</b>
+              <span>Tijera (Icono de Tijera)</span>
+            </div>
+          </div>
+
+          <!-- Estructura completa visual en Bloques MakeCode -->
+          <div class="p-4 bg-slate-900 rounded-xl border border-slate-800 overflow-x-auto">
+            <span class="text-xs text-slate-400 font-mono block mb-2">Estructura completa de Bloques en MakeCode:</span>
+            
+            <div class="mc-block-c bg-mc-input border-orange-700 min-w-[340px]">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fa-solid fa-bolt text-yellow-300"></i>
+                <span>al agitar</span>
+              </div>
+
+              <!-- Fila Asignación Azar -->
+              <div class="mc-slot w-full mb-3">
+                <span>establecer</span>
+                <span class="mc-inline-block bg-red-800">mano</span>
+                <span>a</span>
+                <span class="mc-inline-block bg-mc-math">
+                  escoger al azar de 1 a 3
+                </span>
+              </div>
+
+              <!-- Bloque Lógica Si... Entonces... Si no -->
+              <div class="mc-block-c bg-mc-logic border-teal-800 w-full space-y-2">
+                
+                <!-- IF -->
+                <div class="flex items-center gap-1.5 flex-wrap">
+                  <span class="font-bold">si</span>
+                  <span class="mc-inline-block bg-teal-900 border border-teal-600">
+                    <span class="mc-inline-block bg-red-800">mano</span> = <span class="text-amber-300">1</span>
+                  </span>
+                  <span class="font-bold">entonces</span>
+                </div>
+                <div class="mc-slot bg-mc-basic/80 border-none ml-3">
+                  <span>mostrar icono</span>
+                  <span class="bg-sky-900 px-2 py-0.5 rounded text-amber-300">🔲 (Cuadrado chico - Piedra)</span>
+                </div>
+
+                <!-- ELSE IF -->
+                <div class="flex items-center gap-1.5 flex-wrap pt-1">
+                  <span class="font-bold">si no si</span>
+                  <span class="mc-inline-block bg-teal-900 border border-teal-600">
+                    <span class="mc-inline-block bg-red-800">mano</span> = <span class="text-amber-300">2</span>
+                  </span>
+                  <span class="font-bold">entonces</span>
+                </div>
+                <div class="mc-slot bg-mc-basic/80 border-none ml-3">
+                  <span>mostrar icono</span>
+                  <span class="bg-sky-900 px-2 py-0.5 rounded text-amber-300">⬛ (Cuadrado grande - Papel)</span>
+                </div>
+
+                <!-- ELSE -->
+                <div class="pt-1">
+                  <span class="font-bold">si no</span>
+                </div>
+                <div class="mc-slot bg-mc-basic/80 border-none ml-3">
+                  <span>mostrar icono</span>
+                  <span class="bg-sky-900 px-2 py-0.5 rounded text-amber-300">✂️ (Tijera)</span>
+                </div>
+
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- PASO 5 -->
+        <div id="content-step-5" class="step-content hidden space-y-4">
+          <div class="flex items-center justify-between border-b border-slate-100 pb-3">
+            <h3 class="text-xl font-bold font-display text-slate-800 flex items-center gap-2">
+              <span class="w-8 h-8 rounded-lg bg-purple-100 text-purple-600 flex items-center justify-center text-sm font-bold">5</span>
+              Paso 5: Desafíos y Mejoras con Bloques
+            </h3>
+            <span class="text-xs bg-purple-50 text-purple-600 px-2.5 py-1 rounded-full font-bold uppercase tracking-wider">Desafíos Extra</span>
+          </div>
+
+          <p class="text-slate-600 leading-relaxed text-sm">
+            Agrega estas piezas para hacer tu juego aún más divertido:
+          </p>
+
+          <div class="space-y-3">
+            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <h4 class="font-bold text-sm text-slate-800 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-eraser text-ceibal-primary"></i> 1. Borrar pantalla tras 2 segundos
+              </h4>
+              <p class="text-xs text-slate-600 mb-2">
+                Añade al final del bloque de lógica estas dos piezas de la categoría <span class="bg-mc-basic text-white px-1.5 py-0.5 rounded font-bold text-[10px]">BÁSICO</span>:
+              </p>
+              <div class="flex flex-wrap gap-2">
+                <span class="mc-inline-block bg-mc-basic">pausa (ms) [ 2000 ]</span>
+                <span class="mc-inline-block bg-mc-basic">borrar la pantalla</span>
+              </div>
+            </div>
+
+            <div class="bg-slate-50 p-3.5 rounded-xl border border-slate-200">
+              <h4 class="font-bold text-sm text-slate-800 mb-1 flex items-center gap-2">
+                <i class="fa-solid fa-music text-pink-600"></i> 2. Sonido al agitar (micro:bit V2)
+              </h4>
+              <p class="text-xs text-slate-600 mb-2">
+                Engancha arriba del todo dentro de <span class="bg-mc-input text-white px-1.5 py-0.5 rounded font-bold text-[10px]">al agitar</span> un bloque de la categoría <span class="bg-mc-music text-white px-1.5 py-0.5 rounded font-bold text-[10px]">MÚSICA</span>:
+              </p>
+              <span class="mc-inline-block bg-mc-music">reproducir sonido [ baDing ]</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTONES NAVEGACIÓN PASOS -->
+        <div class="flex justify-between items-center border-t border-slate-100 pt-4 mt-6">
+          <button id="prev-btn" onclick="prevStep()" class="text-xs sm:text-sm font-medium text-slate-500 hover:text-slate-800 disabled:opacity-30 disabled:pointer-events-none flex items-center gap-1.5 px-3 py-2 rounded-lg border border-slate-200">
+            <i class="fa-solid fa-arrow-left"></i> Anterior
+          </button>
+          <span id="step-indicator" class="text-xs text-slate-400 font-medium">Paso 1 de 5</span>
+          <button id="next-btn" onclick="nextStep()" class="text-xs sm:text-sm font-semibold bg-ceibal-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition-all">
+            Siguiente <i class="fa-solid fa-arrow-right"></i>
+          </button>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- COLUMNA DERECHA: SIMULADOR INTERACTIVO LED (5 Cols) -->
+    <section class="lg:col-span-5 flex flex-col gap-6">
+
+      <!-- SIMULADOR MICRO:BIT -->
+      <div class="bg-slate-900 text-white rounded-2xl p-6 shadow-xl border border-slate-800 flex flex-col items-center">
+        <div class="w-full flex justify-between items-center mb-4">
+          <div class="flex items-center gap-2">
+            <span class="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+            <span class="text-xs font-mono uppercase text-slate-400 tracking-wider">Simulador micro:bit V2</span>
+          </div>
+          <span id="status-badge" class="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded border border-slate-700 font-mono">
+            Listo
+          </span>
+        </div>
+
+        <!-- Matriz LED 5x5 -->
+        <div class="my-3 relative">
+          <div id="led-grid" class="led-grid">
+            <!-- Renderizado dinámico vía JS -->
+          </div>
+        </div>
+
+        <!-- Info del estado simulado -->
+        <div class="text-center my-3 h-12 flex flex-col justify-center">
+          <div id="sim-result-text" class="text-sm font-bold text-slate-300">
+            ¡Agita la placa o presiona el botón!
+          </div>
+          <div id="sim-variable-info" class="text-xs font-mono text-slate-500">
+            Variable mano = <span id="val-mano" class="text-red-400 font-bold">-</span>
+          </div>
+        </div>
+
+        <!-- Botón de Acción Shake -->
+        <button id="btn-shake" onclick="simulateShake()" class="w-full py-3.5 bg-gradient-to-r from-orange-500 to-amber-500 hover:from-orange-600 hover:to-amber-600 text-white font-bold rounded-xl shadow-lg transition-all active:scale-95 flex items-center justify-center gap-2 text-sm">
+          <i class="fa-solid fa-hand-fist text-base"></i>
+          <span>Ejecutar Bloque "Al Agitar"</span>
+        </button>
+      </div>
+
+      <!-- MAPA RÁPIDO DE ERRORES AL ENCAJAR BLOQUES -->
+      <div class="bg-white rounded-2xl p-5 shadow-sm border border-slate-200">
+        <h4 class="font-bold text-sm text-slate-800 mb-3 flex items-center gap-2">
+          <i class="fa-solid fa-puzzle-piece text-rose-500"></i> Errores comunes al encajar bloques
+        </h4>
+        <div class="space-y-2.5 text-xs">
+          <div class="p-2.5 bg-rose-50 border-l-4 border-rose-400 rounded-r-lg">
+            <span class="font-bold text-rose-900 block">1. Bloques "grises" o sueltos:</span>
+            <span class="text-rose-700">Si un bloque queda de color gris opaco significa que no está encajado dentro de ningún evento activo como <code class="bg-rose-100 px-1 rounded">al agitar</code>.</span>
+          </div>
+          <div class="p-2.5 bg-amber-50 border-l-4 border-amber-400 rounded-r-lg">
+            <span class="font-bold text-amber-900 block">2. Confundir la variable:</span>
+            <span class="text-amber-700">Asegúrate de colocar la pieza redonda de la variable <code class="bg-amber-100 text-red-700 font-bold px-1 rounded">mano</code> dentro de la comparación <code class="bg-amber-100 px-1 rounded">mano = 1</code>.</span>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+  </main>
+
+  <!-- SECCIÓN TAB 2: PALETA COMPLETA DE BLOQUES POR CATEGORÍA Y COLOR -->
+  <section id="tab-palette" class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 w-full hidden flex-grow">
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200 space-y-6">
+      <div>
+        <h2 class="text-2xl font-bold font-display text-slate-800 mb-1">Paleta Oficial de Bloques MakeCode</h2>
+        <p class="text-slate-600 text-sm">Consulta aquí las formas y colores oficiales de los bloques utilizados en este tutorial:</p>
+      </div>
+
+      <div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+        <!-- CATEGORÍA ENTRADA -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <div class="bg-mc-input text-white px-4 py-2.5 font-bold text-sm flex items-center justify-between">
+            <span>ENTRADA (Input)</span>
+            <i class="fa-solid fa-bolt"></i>
+          </div>
+          <div class="p-4 bg-slate-50 space-y-3">
+            <p class="text-xs text-slate-500">Detectan acciones físicas sobre la placa:</p>
+            <div class="mc-block-c bg-mc-input border-orange-800 text-xs">
+              al agitar
+            </div>
+            <div class="mc-block-c bg-mc-input border-orange-800 text-xs">
+              al presionarse el botón [ A ]
+            </div>
+          </div>
+        </div>
+
+        <!-- CATEGORÍA VARIABLES -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <div class="bg-mc-variables text-white px-4 py-2.5 font-bold text-sm flex items-center justify-between">
+            <span>VARIABLES</span>
+            <i class="fa-solid fa-box"></i>
+          </div>
+          <div class="p-4 bg-slate-50 space-y-3">
+            <p class="text-xs text-slate-500">Almacenan valores en la memoria:</p>
+            <div class="mc-inline-block bg-mc-variables">
+              establecer [ mano ] a [ 0 ]
+            </div>
+            <br>
+            <div class="mc-inline-block bg-mc-variables">
+              mano
+            </div>
+          </div>
+        </div>
+
+        <!-- CATEGORÍA MATEMÁTICA -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <div class="bg-mc-math text-white px-4 py-2.5 font-bold text-sm flex items-center justify-between">
+            <span>MATEMÁTICA</span>
+            <i class="fa-solid fa-calculator"></i>
+          </div>
+          <div class="p-4 bg-slate-50 space-y-3">
+            <p class="text-xs text-slate-500">Generan números y operaciones:</p>
+            <div class="mc-inline-block bg-mc-math">
+              escoger al azar de [ 1 ] a [ 3 ]
+            </div>
+          </div>
+        </div>
+
+        <!-- CATEGORÍA LÓGICA -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <div class="bg-mc-logic text-white px-4 py-2.5 font-bold text-sm flex items-center justify-between">
+            <span>LÓGICA</span>
+            <i class="fa-solid fa-code-branch"></i>
+          </div>
+          <div class="p-4 bg-slate-50 space-y-3">
+            <p class="text-xs text-slate-500">Toman decisiones y comparan valores:</p>
+            <div class="mc-block-c bg-mc-logic border-teal-900 text-xs">
+              si &lt; condición &gt; entonces
+            </div>
+            <div class="mc-inline-block bg-mc-logic border border-teal-600">
+              [ 0 ] = [ 0 ]
+            </div>
+          </div>
+        </div>
+
+        <!-- CATEGORÍA BÁSICO -->
+        <div class="border border-slate-200 rounded-xl overflow-hidden">
+          <div class="bg-mc-basic text-white px-4 py-2.5 font-bold text-sm flex items-center justify-between">
+            <span>BÁSICO</span>
+            <i class="fa-solid fa-icons"></i>
+          </div>
+          <div class="p-4 bg-slate-50 space-y-3">
+            <p class="text-xs text-slate-500">Controlan la pantalla LED y tiempos:</p>
+            <div class="mc-inline-block bg-mc-basic">
+              mostrar icono [ ❤️ ]
+            </div>
+            <br>
+            <div class="mc-inline-block bg-mc-basic">
+              borrar la pantalla
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- CHECKLIST DE VERIFICACIÓN AL FINAL -->
+  <section class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 mb-12 w-full">
+    <div class="bg-white rounded-2xl p-6 shadow-sm border border-slate-200">
+      <h3 class="text-lg font-bold font-display text-slate-800 mb-2 flex items-center gap-2">
+        <i class="fa-solid fa-list-check text-ceibal-accent"></i> Lista de Verificación del Estudiante
+      </h3>
+      <p class="text-xs text-slate-500 mb-4">Marca las casillas conforme vayas encajando los bloques en tu proyecto:</p>
+      
+      <div class="grid md:grid-cols-2 gap-3" id="checklist">
+        <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors border border-slate-200">
+          <input type="checkbox" onchange="updateChecklist()" class="check-item mt-0.5 w-4 h-4 rounded text-ceibal-primary focus:ring-ceibal-accent">
+          <span class="text-xs sm:text-sm text-slate-700">Creé la variable <code class="bg-red-100 text-red-700 font-bold px-1 rounded">mano</code> en la categoría Variables.</span>
+        </label>
+
+        <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors border border-slate-200">
+          <input type="checkbox" onchange="updateChecklist()" class="check-item mt-0.5 w-4 h-4 rounded text-ceibal-primary focus:ring-ceibal-accent">
+          <span class="text-xs sm:text-sm text-slate-700">Coloqué el bloque <span class="bg-mc-input text-white text-[10px] font-bold px-1 rounded">al agitar</span> en el tapiz de trabajo.</span>
+        </label>
+
+        <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors border border-slate-200">
+          <input type="checkbox" onchange="updateChecklist()" class="check-item mt-0.5 w-4 h-4 rounded text-ceibal-primary focus:ring-ceibal-accent">
+          <span class="text-xs sm:text-sm text-slate-700">Enganché el azar de <b class="text-indigo-600">1 a 3</b> para guardarlo en la variable.</span>
+        </label>
+
+        <label class="flex items-start gap-3 p-3 rounded-xl bg-slate-50 hover:bg-slate-100 cursor-pointer transition-colors border border-slate-200">
+          <input type="checkbox" onchange="updateChecklist()" class="check-item mt-0.5 w-4 h-4 rounded text-ceibal-primary focus:ring-ceibal-accent">
+          <span class="text-xs sm:text-sm text-slate-700">Configuré los 3 casos con condicionales para mostrar Piedra, Papel y Tijera.</span>
+        </label>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer class="bg-ceibal-dark text-slate-400 text-xs py-6 border-t border-slate-800 mt-auto">
+    <div class="max-w-7xl mx-auto px-4 text-center sm:flex sm:justify-between sm:items-center space-y-2 sm:space-y-0">
+      <p>© 2026 Guía por Bloques • Plan Ceibal / ANEP • EBI Uruguay</p>
+      <p class="flex justify-center gap-4">
+        <a href="https://makecode.microbit.org" target="_blank" class="hover:text-white transition-colors">Editor MakeCode</a>
+      </p>
+    </div>
+  </footer>
+
+  <!-- SCRIPT LÓGICA DE INTERACTIVIDAD Y SIMULADOR -->
+  <script>
+    let currentStep = 1;
+    const totalSteps = 5;
+
+    // Patrones LED
+    const LED_PATTERNS = {
+      blank: [0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0, 0,0,0,0,0],
+      rock: [0,0,0,0,0, 0,1,1,1,0, 0,1,1,1,0, 0,1,1,1,0, 0,0,0,0,0],
+      paper: [1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1, 1,1,1,1,1],
+      scissors: [1,1,0,0,1, 1,1,0,1,0, 0,0,1,0,0, 1,1,0,1,0, 1,1,0,0,1]
+    };
+
+    window.onload = function() {
+      createLedGrid();
+      renderLedPattern('blank');
+      updateProgress();
+    };
+
+    function createLedGrid() {
+      const gridContainer = document.getElementById('led-grid');
+      gridContainer.innerHTML = '';
+      for (let i = 0; i < 25; i++) {
+        const dot = document.createElement('div');
+        dot.className = 'led-dot';
+        dot.id = `led-${i}`;
+        gridContainer.appendChild(dot);
+      }
+    }
+
+    function renderLedPattern(patternKey) {
+      const pattern = LED_PATTERNS[patternKey] || LED_PATTERNS.blank;
+      for (let i = 0; i < 25; i++) {
+        const led = document.getElementById(`led-${i}`);
+        if (led) {
+          if (pattern[i] === 1) led.classList.add('on');
+          else led.classList.remove('on');
+        }
+      }
+    }
+
+    function simulateShake() {
+      const grid = document.getElementById('led-grid');
+      const statusBadge = document.getElementById('status-badge');
+      const resultText = document.getElementById('sim-result-text');
+      const valMano = document.getElementById('val-mano');
+      const btnShake = document.getElementById('btn-shake');
+
+      btnShake.disabled = true;
+      statusBadge.innerText = 'Ejecutando al agitar...';
+      grid.classList.add('animate-shake');
+      renderLedPattern('blank');
+      resultText.innerText = 'Escogiendo número al azar (1 a 3)...';
+
+      setTimeout(() => {
+        grid.classList.remove('animate-shake');
+        const choice = Math.floor(Math.random() * 3) + 1;
+        valMano.innerText = choice;
+
+        if (choice === 1) {
+          renderLedPattern('rock');
+          resultText.innerHTML = '<span class="text-amber-400 font-bold">mano = 1 ➔ PIEDRA (Cuadrado chico)</span>';
+        } else if (choice === 2) {
+          renderLedPattern('paper');
+          resultText.innerHTML = '<span class="text-sky-400 font-bold">mano = 2 ➔ PAPEL (Cuadrado grande)</span>';
+        } else {
+          renderLedPattern('scissors');
+          resultText.innerHTML = '<span class="text-rose-400 font-bold">mano = 3 ➔ TIJERA</span>';
+        }
+
+        statusBadge.innerText = 'Listo';
+        btnShake.disabled = false;
+      }, 500);
+    }
+
+    function goToStep(stepNumber) {
+      currentStep = stepNumber;
+      for (let i = 1; i <= totalSteps; i++) {
+        const content = document.getElementById(`content-step-${i}`);
+        const btn = document.getElementById(`btn-step-${i}`);
+        if (content) content.classList.add('hidden');
+        if (btn) btn.className = 'step-btn py-2.5 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex flex-col items-center gap-1 bg-slate-100 text-slate-600 hover:bg-slate-200';
+      }
+
+      const activeContent = document.getElementById(`content-step-${currentStep}`);
+      const activeBtn = document.getElementById(`btn-step-${currentStep}`);
+      if (activeContent) activeContent.classList.remove('hidden');
+      if (activeBtn) activeBtn.className = 'step-btn py-2.5 px-2 rounded-xl text-xs sm:text-sm font-semibold transition-all flex flex-col items-center gap-1 bg-ceibal-primary text-white shadow-md scale-105';
+
+      document.getElementById('prev-btn').disabled = (currentStep === 1);
+      const nextBtn = document.getElementById('next-btn');
+      if (currentStep === totalSteps) {
+        nextBtn.innerHTML = '¡Completado! <i class="fa-solid fa-check"></i>';
+        nextBtn.className = 'text-xs sm:text-sm font-semibold bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition-all';
+      } else {
+        nextBtn.innerHTML = 'Siguiente <i class="fa-solid fa-arrow-right"></i>';
+        nextBtn.className = 'text-xs sm:text-sm font-semibold bg-ceibal-primary hover:bg-blue-700 text-white px-4 py-2 rounded-lg flex items-center gap-1.5 shadow-sm transition-all';
+      }
+
+      document.getElementById('step-indicator').innerText = `Paso ${currentStep} de ${totalSteps}`;
+      updateProgress();
+    }
+
+    function nextStep() { if (currentStep < totalSteps) goToStep(currentStep + 1); }
+    function prevStep() { if (currentStep > 1) goToStep(currentStep - 1); }
+
+    function switchTab(tabName) {
+      const tutSection = document.getElementById('tab-tutorial');
+      const palSection = document.getElementById('tab-palette');
+      const tutBtn = document.getElementById('tab-tutorial-btn');
+      const palBtn = document.getElementById('tab-palette-btn');
+
+      if (tabName === 'tutorial') {
+        tutSection.classList.remove('hidden');
+        palSection.classList.add('hidden');
+        tutBtn.className = 'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-ceibal-primary text-white shadow-md';
+        palBtn.className = 'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-white text-slate-600 hover:bg-slate-100 border border-slate-200';
+      } else {
+        tutSection.classList.add('hidden');
+        palSection.classList.remove('hidden');
+        palBtn.className = 'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-ceibal-primary text-white shadow-md';
+        tutBtn.className = 'px-5 py-2.5 rounded-xl font-bold text-sm transition-all flex items-center gap-2 bg-white text-slate-600 hover:bg-slate-100 border border-slate-200';
+      }
+    }
+
+    function updateChecklist() { updateProgress(); }
+
+    function updateProgress() {
+      const checkboxes = document.querySelectorAll('.check-item');
+      let checkedCount = 0;
+      checkboxes.forEach(cb => { if (cb.checked) checkedCount++; });
+
+      const stepProgress = (currentStep / totalSteps) * 50;
+      const checkProgress = checkboxes.length ? (checkedCount / checkboxes.length) * 50 : 0;
+      const totalPercent = Math.round(stepProgress + checkProgress);
+
+      document.getElementById('progress-percent').innerText = `${totalPercent}%`;
+      document.getElementById('progress-bar').style.width = `${totalPercent}%`;
+    }
+  </script>
+</body>
+</html>
